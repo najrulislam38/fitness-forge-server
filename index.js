@@ -27,7 +27,45 @@ async function run() {
     await client.connect();
 
     const blogCollection = client.db("fitnessForgeDB").collection("blogs");
+    const galleryCollection = client.db("fitnessForgeDB").collection("gallery");
+    const usersCollection = client.db("fitnessForgeDB").collection("users");
 
+    // users collection operation
+    app.get("/users", async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.post("/users", async (req, res) => {
+      try {
+        const user = req.body;
+        const query = { email: user?.email };
+        const isExist = await usersCollection.findOne(query);
+        if (isExist) {
+          return res.send({
+            message: "user already existed",
+            insertedId: null,
+          });
+        }
+        const result = await usersCollection.insertOne(user);
+        res.send(result);
+      } catch (error) {
+        console.log(error?.message);
+      }
+    });
+
+    // gallery collection operations
+    app.get("/gallery", async (req, res) => {
+      try {
+        const page = req.query?.page;
+        const result = await galleryCollection.find().toArray();
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    // blog collection operations
     app.get("/blogs", async (req, res) => {
       try {
         const result = await blogCollection.find().toArray();

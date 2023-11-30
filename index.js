@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion } = require("mongodb");
+var jwt = require("jsonwebtoken");
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -29,6 +30,15 @@ async function run() {
     const blogCollection = client.db("fitnessForgeDB").collection("blogs");
     const galleryCollection = client.db("fitnessForgeDB").collection("gallery");
     const usersCollection = client.db("fitnessForgeDB").collection("users");
+
+    // jwt
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.JWT_ACCESS_TOKEN_SECRET, {
+        expiresIn: "2h",
+      });
+      res.send({ token });
+    });
 
     // users collection operation
     app.get("/users", async (req, res) => {

@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 var jwt = require("jsonwebtoken");
 const app = express();
 const port = process.env.PORT || 5000;
@@ -30,8 +30,11 @@ async function run() {
     const blogCollection = client.db("fitnessForgeDB").collection("blogs");
     const galleryCollection = client.db("fitnessForgeDB").collection("gallery");
     const usersCollection = client.db("fitnessForgeDB").collection("users");
+    const trainerCollection = client
+      .db("fitnessForgeDB")
+      .collection("trainers");
 
-    // jwt
+    // jwt api
     app.post("/jwt", async (req, res) => {
       const user = req.body;
       const token = jwt.sign(user, process.env.JWT_ACCESS_TOKEN_SECRET, {
@@ -42,8 +45,12 @@ async function run() {
 
     // users collection operation
     app.get("/users", async (req, res) => {
-      const result = await usersCollection.find().toArray();
-      res.send(result);
+      try {
+        const result = await usersCollection.find().toArray();
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
     });
 
     app.post("/users", async (req, res) => {
@@ -61,6 +68,27 @@ async function run() {
         res.send(result);
       } catch (error) {
         console.log(error?.message);
+      }
+    });
+
+    // trainer collection api.
+    app.get("/trainers", async (req, res) => {
+      try {
+        const result = await trainerCollection.find().toArray();
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.get("/trainers/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await trainerCollection.findOne(query);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
       }
     });
 

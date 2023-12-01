@@ -34,6 +34,21 @@ async function run() {
       .db("fitnessForgeDB")
       .collection("trainers");
 
+    // middleware
+    const verifyToken = (req, res, next) => {
+      if (!req?.headers?.authorization) {
+        return res.status(401).send({ message: "unauthorized access" });
+      }
+      const token = req.headers?.authorization.split(" ")[1];
+      jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+          return res.status(401).send({ message: "unauthorized access" });
+        }
+        req.decoded = decoded;
+        next();
+      });
+    };
+
     // jwt api
     app.post("/jwt", async (req, res) => {
       const user = req.body;
@@ -44,7 +59,7 @@ async function run() {
     });
 
     // users collection operation
-    app.get("/users", async (req, res) => {
+    app.get("/users", verifyToken, async (req, res) => {
       try {
         const result = await usersCollection.find().toArray();
         res.send(result);

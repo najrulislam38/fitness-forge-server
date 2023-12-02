@@ -33,6 +33,9 @@ async function run() {
     const trainerCollection = client
       .db("fitnessForgeDB")
       .collection("trainers");
+    const trainerRequestCollection = client
+      .db("fitnessForgeDB")
+      .collection("trainerRequest");
 
     // middleware
     const verifyToken = (req, res, next) => {
@@ -101,6 +104,22 @@ async function run() {
         const id = req.params.id;
         const query = { _id: new ObjectId(id) };
         const result = await trainerCollection.findOne(query);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    // trainer request collection api
+    app.get("/trainerRequest", verifyToken, async (req, res) => {
+      const result = await menuCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.post("/trainerRequest", async (req, res) => {
+      try {
+        const reqTrainer = req.body;
+        const result = await trainerRequestCollection.insertOne(reqTrainer);
         res.send(result);
       } catch (error) {
         console.log(error);

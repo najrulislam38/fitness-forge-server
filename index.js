@@ -30,6 +30,9 @@ async function run() {
     const blogCollection = client.db("fitnessForgeDB").collection("blogs");
     const galleryCollection = client.db("fitnessForgeDB").collection("gallery");
     const usersCollection = client.db("fitnessForgeDB").collection("users");
+    const subscribersCollection = client
+      .db("fitnessForgeDB")
+      .collection("subscribers");
     const trainerCollection = client
       .db("fitnessForgeDB")
       .collection("trainers");
@@ -52,6 +55,18 @@ async function run() {
       });
     };
 
+    // verify admin
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      const isAdmin = user?.role === "admin";
+      if (!isAdmin) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      next();
+    };
+
     // jwt api
     app.post("/jwt", async (req, res) => {
       const user = req.body;
@@ -61,11 +76,52 @@ async function run() {
       res.send({ token });
     });
 
+    // service api
     // users collection operation
-    app.get("/users", verifyToken, async (req, res) => {
+    app.get("/users", verifyToken, verifyAdmin, async (req, res) => {
       try {
         const result = await usersCollection.find().toArray();
         res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.get("/users/trainer/:email", verifyToken, async (req, res) => {
+      try {
+        const email = req.params.email;
+
+        if (email !== req.decoded.email) {
+          return res.status(403).send({ message: "forbidden access" });
+        }
+
+        const query = { email: email };
+        const user = await usersCollection.findOne(query);
+        let trainer = false;
+        if (user) {
+          trainer = user?.role === "trainer";
+        }
+        res.send({ trainer });
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.get("/users/admin/:email", verifyToken, async (req, res) => {
+      try {
+        const email = req.params.email;
+
+        if (email !== req.decoded.email) {
+          return res.status(403).send({ message: "forbidden access" });
+        }
+
+        const query = { email: email };
+        const user = await usersCollection.findOne(query);
+        let admin = false;
+        if (user) {
+          admin = user?.role === "admin";
+        }
+        res.send({ admin });
       } catch (error) {
         console.log(error);
       }
@@ -112,14 +168,30 @@ async function run() {
 
     // trainer request collection api
     app.get("/trainerRequest", verifyToken, async (req, res) => {
-      const result = await menuCollection.find().toArray();
+      const result = await trainerRequestCollection.find().toArray();
       res.send(result);
     });
 
-    app.post("/trainerRequest", async (req, res) => {
+    app.post("/trainerRequest", verifyToken, async (req, res) => {
       try {
         const reqTrainer = req.body;
         const result = await trainerRequestCollection.insertOne(reqTrainer);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    //subscribers collection api
+    app.get("/subscribers", verifyToken, async (req, res) => {
+      const result = await subscribersCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.post("/subscribers", async (req, res) => {
+      try {
+        const subscriber = req.body;
+        const result = await subscribersCollection.insertOne(subscriber);
         res.send(result);
       } catch (error) {
         console.log(error);

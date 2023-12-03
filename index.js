@@ -39,6 +39,7 @@ async function run() {
     const trainerRequestCollection = client
       .db("fitnessForgeDB")
       .collection("trainerRequest");
+    const forumCollection = client.db("fitnessForgeDB").collection("forums");
 
     // middleware
     const verifyToken = (req, res, next) => {
@@ -56,12 +57,12 @@ async function run() {
     };
 
     // verify admin
-    const verifyAdmin = async (req, res, next) => {
+    const verifyAdminAndTrainer = async (req, res, next) => {
       const email = req.decoded.email;
       const query = { email: email };
-      const user = await userCollection.findOne(query);
-      const isAdmin = user?.role === "admin";
-      if (!isAdmin) {
+      const user = await usersCollection.findOne(query);
+      const isAuthor = user?.role === "admin" || user?.role === "trainer";
+      if (!isAuthor) {
         return res.status(403).send({ message: "forbidden access" });
       }
       next();
@@ -78,7 +79,7 @@ async function run() {
 
     // service api
     // users collection operation
-    app.get("/users", verifyToken, verifyAdmin, async (req, res) => {
+    app.get("/users", verifyToken, verifyAdminAndTrainer, async (req, res) => {
       try {
         const result = await usersCollection.find().toArray();
         res.send(result);
@@ -192,6 +193,37 @@ async function run() {
       try {
         const subscriber = req.body;
         const result = await subscribersCollection.insertOne(subscriber);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    // forum collection operations
+    app.get("/forums", async (req, res) => {
+      try {
+        const result = await forumCollection.find().toArray();
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.get("/forums/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await forumCollection.findOne(query);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.post("/forums", verifyToken, async (req, res) => {
+      try {
+        const forum = req?.body;
+        const result = await forumCollection.insertOne(forum);
         res.send(result);
       } catch (error) {
         console.log(error);

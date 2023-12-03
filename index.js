@@ -25,7 +25,7 @@ const client = new MongoClient(process.env.MONGODB_URL, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const blogCollection = client.db("fitnessForgeDB").collection("blogs");
     const galleryCollection = client.db("fitnessForgeDB").collection("gallery");

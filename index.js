@@ -30,6 +30,7 @@ async function run() {
     const blogCollection = client.db("fitnessForgeDB").collection("blogs");
     const galleryCollection = client.db("fitnessForgeDB").collection("gallery");
     const usersCollection = client.db("fitnessForgeDB").collection("users");
+    const classCollection = client.db("fitnessForgeDB").collection("classes");
     const subscribersCollection = client
       .db("fitnessForgeDB")
       .collection("subscribers");
@@ -145,6 +146,38 @@ async function run() {
         console.log(error?.message);
       }
     });
+
+    // class collection operation api
+    app.get("/classes", async (req, res) => {
+      try {
+        const result = await classCollection.find().toArray();
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.get("/classes/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await classCollection.findOne(query);
+      res.send(result);
+    });
+
+    app.post(
+      "/classes",
+      verifyToken,
+      verifyAdminAndTrainer,
+      async (req, res) => {
+        try {
+          const classInfo = req.body;
+          const result = await classCollection.insertOne(classInfo);
+          res.send(result);
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    );
 
     // trainer collection api.
     app.get("/trainers", async (req, res) => {
